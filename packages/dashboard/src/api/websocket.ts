@@ -4,16 +4,31 @@ class WebSocketService {
   private ws: WebSocket | null = null;
   private sessions: Map<string, Session> = new Map();
   private listeners: ((sessions: Session[]) => void)[] = [];
+  private reconnectTimer: NodeJS.Timeout | null = null;
+  private isConnecting: boolean = false;
 
   constructor() {
     this.connect();
   }
 
   private connect() {
+    if (this.isConnecting) return;
+    this.isConnecting = true;
+
+    if (this.ws) {
+      this.ws.close();
+      this.ws = null;
+    }
+
     this.ws = new WebSocket("ws://localhost:8080");
 
     this.ws.onopen = () => {
       console.log("Connected to analytics server");
+      this.isConnecting = false;
+      if (this.reconnectTimer) {
+        clearTimeout(this.reconnectTimer);
+        this.reconnectTimer = null;
+      }
       // Identify as dashboard
       this.ws?.send("dashboard_connect");
     };
@@ -22,18 +37,32 @@ class WebSocketService {
       try {
         const data = JSON.parse(event.data);
         if (data.type === "session_update") {
+          const sessionId = data.sessionId;
+          const existingSession = this.sessions.get(sessionId);
+
+          // Create new session data by merging with existing data
           const session: Session = {
-            id: data.sessionId,
-            startTime: new Date(data.timestamp).toISOString(),
-            events: data.events || [],
-            screenshotPath: data.screenshotPath || "",
-            pageUrl: data.pageUrl || "",
-            consoleLogs: data.consoleLogs || [],
-            aiAnalysis: data.aiAnalysis || "",
+            sessionId: data.sessionId,
+            timestamp: data.timestamp,
+            events: data.events || existingSession?.events || [],
+            // Keep existing DOM snapshot and styles if not provided in update
+            domSnapshot: data.domSnapshot || existingSession?.domSnapshot || "",
+            styles: data.styles ||
+              existingSession?.styles || { inline: [], computed: [] },
+            pageUrl: data.pageUrl || existingSession?.pageUrl || "",
+            consoleLogs: data.consoleLogs || existingSession?.consoleLogs || [],
+            assetUrls: data.assetUrls || existingSession?.assetUrls || [],
           };
 
-          console.log("Created session object:", session);
-          this.sessions.set(session.id, session);
+          // Update or add the session
+          this.sessions.set(session.sessionId, session);
+          this.notifyListeners();
+        } else if (data.type === "sessions_list") {
+          // Handle initial sessions list
+          this.sessions.clear();
+          data.sessions.forEach((session: Session) => {
+            this.sessions.set(session.sessionId, session);
+          });
           this.notifyListeners();
         }
       } catch (error) {
@@ -43,7 +72,23 @@ class WebSocketService {
 
     this.ws.onclose = () => {
       console.log("Disconnected from analytics server");
-      setTimeout(() => this.connect(), 1000);
+      this.isConnecting = false;
+      // Only set a new reconnect timer if one isn't already set
+      if (!this.reconnectTimer) {
+        this.reconnectTimer = setTimeout(() => {
+          this.reconnectTimer = null;
+          this.connect();
+        }, 1000);
+      }
+    };
+
+    this.ws.onerror = (error) => {
+      console.error("WebSocket error:", error);
+      this.isConnecting = false;
+      if (this.ws) {
+        this.ws.close();
+        this.ws = null;
+      }
     };
   }
 
@@ -58,8 +103,13 @@ class WebSocketService {
 
   private notifyListeners() {
     const sessions = Array.from(this.sessions.values());
-    console.log("Notifying listeners with sessions:", sessions);
-    this.listeners.forEach((listener) => listener(sessions));
+    this.listeners.forEach((listener) => {
+      try {
+        listener(sessions);
+      } catch (error) {
+        console.error("Error in listener:", error);
+      }
+    });
   }
 }
 

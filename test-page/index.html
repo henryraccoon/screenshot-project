@@ -3,83 +3,136 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Analytics SDK Test Page</title>
+    <title>Analytics Test Page</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
+    <script src="js/analytics-sdk.min.js"></script>
+    <script>
+      window.addEventListener("load", function () {
+        if (window.initAnalyticsClient) {
+          window.initAnalyticsClient();
+        } else {
+          console.error("Analytics SDK not loaded properly");
+        }
+      });
+    </script>
     <style>
       body {
         font-family: Arial, sans-serif;
-        padding: 20px;
-      }
-      .container {
         max-width: 800px;
         margin: 0 auto;
+        padding: 20px;
       }
+      .form-group {
+        margin-bottom: 20px;
+      }
+      label {
+        display: block;
+        margin-bottom: 5px;
+      }
+      select,
+      input,
       button {
-        margin: 10px;
-        padding: 10px;
+        padding: 8px;
+        margin-bottom: 10px;
       }
-      input {
-        margin: 10px;
-        padding: 10px;
+      .image-container {
+        margin: 20px 0;
+      }
+      img {
+        max-width: 100%;
+        height: auto;
+      }
+      .slider-value {
+        margin-left: 10px;
       }
     </style>
   </head>
   <body>
-    <div class="container">
-      <h1>Analytics SDK Test Page</h1>
+    <h1>Analytics Test Page</h1>
 
-      <div>
-        <button id="clickMe">Click Me</button>
-        <button id="hoverMe">Hover Over Me</button>
-        <input type="text" id="textInput" placeholder="Type something..." />
-      </div>
-
-      <div
-        id="consoleOutput"
-        style="
-          margin-top: 20px;
-          padding: 10px;
-          border: 1px solid #ccc;
-          min-height: 100px;
-        "
-      >
-        <h3>Console Output:</h3>
-      </div>
+    <div class="image-container">
+      <img
+        src="https://picsum.photos/id/273/800/400"
+        alt="Black puppy"
+        id="random-image"
+      />
     </div>
 
-    <!-- Include LZString from CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
-    <!-- Then include the SDK -->
-    <script
-      src="js/analytics-sdk.min.js"
-      onerror="console.error('Failed to load SDK')"
-    ></script>
+    <form id="test-form">
+      <div class="form-group">
+        <label for="product">Choose a product:</label>
+        <select id="product" name="product">
+          <option value="">Select a product...</option>
+          <option value="laptop">Laptop</option>
+          <option value="phone">Smartphone</option>
+          <option value="tablet">Tablet</option>
+          <option value="watch">Smartwatch</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="quantity">Quantity:</label>
+        <input type="number" id="quantity" name="quantity" min="1" value="1" />
+      </div>
+
+      <div class="form-group">
+        <label for="price-range"
+          >Price Range:
+          <span class="slider-value" id="price-value">$500</span></label
+        >
+        <input
+          type="range"
+          id="price-range"
+          name="price-range"
+          min="100"
+          max="2000"
+          value="500"
+          step="100"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="color">Preferred Color:</label>
+        <input type="color" id="color" name="color" value="#ff0000" />
+      </div>
+
+      <div class="form-group">
+        <label for="delivery-date">Delivery Date:</label>
+        <input type="date" id="delivery-date" name="delivery-date" />
+      </div>
+
+      <div class="form-group">
+        <label for="comments">Additional Comments:</label>
+        <textarea
+          id="comments"
+          name="comments"
+          rows="4"
+          style="width: 100%"
+        ></textarea>
+      </div>
+
+      <button type="submit">Submit Order</button>
+    </form>
+
     <script>
-      // Wait for SDK to load
-      window.addEventListener("load", () => {
-        if (typeof window.initAnalyticsClient === "function") {
-          console.log("SDK loaded successfully");
-          window.initAnalyticsClient();
-        } else {
-          console.error("SDK not loaded properly");
-        }
+      // Update price range value
+      document.getElementById("price-range").addEventListener("input", (e) => {
+        document.getElementById(
+          "price-value"
+        ).textContent = `$${e.target.value}`;
       });
 
-      // Test console logging
-      console.log("Test log message");
-      console.warn("Test warning message");
-      console.error("Test error message");
-
-      // Add event listeners
-      document.getElementById("clickMe").addEventListener("click", () => {
-        console.log("Button clicked!");
-      });
-
-      document.getElementById("hoverMe").addEventListener("mouseover", () => {
-        console.log("Button hovered!");
-      });
-
-      document.getElementById("textInput").addEventListener("input", (e) => {
-        console.log("Input changed:", e.target.value);
+      // Handle form submission
+      document.getElementById("test-form").addEventListener("submit", (e) => {
+        e.preventDefault();
+        console.log("Form submitted!", {
+          product: document.getElementById("product").value,
+          quantity: document.getElementById("quantity").value,
+          priceRange: document.getElementById("price-range").value,
+          color: document.getElementById("color").value,
+          deliveryDate: document.getElementById("delivery-date").value,
+          comments: document.getElementById("comments").value,
+        });
       });
     </script>
   </body>

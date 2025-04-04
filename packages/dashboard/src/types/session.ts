@@ -1,11 +1,18 @@
 export interface Session {
-  id: string;
-  startTime: string;
+  sessionId: string;
+  timestamp: number;
   events: any[];
-  screenshotPath: string;
-  pageUrl: string;
+  domSnapshot: string;
+  styles: {
+    inline: string[];
+    computed: Array<{
+      selector: string;
+      styles: { [key: string]: string };
+    }>;
+  };
   consoleLogs: string[];
-  aiAnalysis: string;
+  pageUrl: string;
+  assetUrls: string[];
 }
 
 export interface SessionCardProps {

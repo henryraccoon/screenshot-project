@@ -3,42 +3,43 @@ import { Session } from "../types/session";
 // Mock data
 const mockSessions: Session[] = [
   {
-    id: "session-1",
+    sessionId: "session-1",
     timestamp: Date.now() - 3600000, // 1 hour ago
-    summary: {
-      userActivity: "User was browsing the product catalog",
-      potentialIssues: [
-        "Rapid clicking on product images",
-        "Excessive scrolling",
-      ],
-      uxSuggestions: [
-        "Add loading states for images",
-        "Implement infinite scroll",
-      ],
-      confidence: 0.85,
+    events: [],
+    domSnapshot: "<html><body><h1>Mock Session 1</h1></body></html>",
+    styles: {
+      inline: [],
+      computed: [],
     },
-    screenshotPath: "/mock-screenshot-1.png",
+    pageUrl: "http://localhost:8000",
+    consoleLogs: [],
+    assetUrls: [],
   },
   {
-    id: "session-2",
+    sessionId: "session-2",
     timestamp: Date.now() - 7200000, // 2 hours ago
-    summary: {
-      userActivity: "User was filling out a registration form",
-      potentialIssues: ["Multiple form corrections", "Slow input response"],
-      uxSuggestions: ["Add real-time validation", "Optimize form performance"],
-      confidence: 0.78,
+    events: [],
+    domSnapshot: "<html><body><h1>Mock Session 2</h1></body></html>",
+    styles: {
+      inline: [],
+      computed: [],
     },
+    pageUrl: "http://localhost:8000",
+    consoleLogs: [],
+    assetUrls: [],
   },
   {
-    id: "session-3",
+    sessionId: "session-3",
     timestamp: Date.now() - 10800000, // 3 hours ago
-    summary: {
-      userActivity: "User was navigating through the checkout process",
-      potentialIssues: ["Cart abandonment", "Multiple page refreshes"],
-      uxSuggestions: ["Simplify checkout steps", "Add progress indicator"],
-      confidence: 0.92,
+    events: [],
+    domSnapshot: "<html><body><h1>Mock Session 3</h1></body></html>",
+    styles: {
+      inline: [],
+      computed: [],
     },
-    screenshotPath: "/mock-screenshot-2.png",
+    pageUrl: "http://localhost:8000",
+    consoleLogs: [],
+    assetUrls: [],
   },
 ];
 

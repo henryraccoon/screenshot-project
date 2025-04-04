@@ -22,22 +22,20 @@ interface Payload {
   timestamp: number;
   events: EventData[];
   domSnapshot: string;
-  consoleLogs: string[];
   pageUrl: string;
-  assetUrls: string[];
 }
 
 export class AnalyticsClient {
   private sessionId: string;
   private ws: WebSocket | null = null;
   private eventQueue: EventData[] = [];
-  private consoleLogs: string[] = [];
+  private updateInterval: number = 1000; // Send updates every second
+  private reconnectTimeout: any = null;
 
   constructor() {
     this.sessionId = Date.now() + "-" + Math.random().toString(36).substring(2);
     this.connect();
     this.setupEventListeners();
-    this.overrideConsoleMethods();
     this.startPeriodicCollection();
   }
 
@@ -50,98 +48,90 @@ export class AnalyticsClient {
     this.ws = new WebSocket("ws://localhost:8080");
 
     this.ws.onopen = () => {
-      this.sendQueuedData();
+      console.log("Analytics WebSocket connected");
+      this.sendUpdate();
     };
 
     this.ws.onclose = () => {
-      setTimeout(() => this.connect(), 1000);
+      if (this.reconnectTimeout) {
+        clearTimeout(this.reconnectTimeout);
+      }
+      this.reconnectTimeout = setTimeout(() => this.connect(), 1000);
+    };
+
+    this.ws.onerror = (error) => {
+      console.error("WebSocket error:", error);
     };
   }
 
-  private sendQueuedData() {
-    if (this.eventQueue.length === 0 && this.consoleLogs.length === 0) return;
+  private sendUpdate() {
+    if (this.ws?.readyState !== WebSocket.OPEN) return;
 
-    const payload = {
+    const payload: Payload = {
       sessionId: this.sessionId,
       timestamp: Date.now(),
       events: this.eventQueue,
       domSnapshot: document.documentElement.outerHTML,
-      consoleLogs: this.consoleLogs,
       pageUrl: window.location.href,
-      assetUrls: this.collectAssetUrls(),
     };
 
-    if (this.ws?.readyState === WebSocket.OPEN) {
-      try {
-        this.ws.send(LZString.compressToBase64(JSON.stringify(payload)));
-        this.eventQueue = [];
-        this.consoleLogs = [];
-      } catch (error) {
-        console.error("Failed to send data:", error);
-      }
+    try {
+      this.ws.send(LZString.compressToBase64(JSON.stringify(payload)));
+      this.eventQueue = [];
+    } catch (error) {
+      console.error("Failed to send data:", error);
     }
   }
 
   private setupEventListeners() {
-    ["click", "scroll", "input", "change", "mousemove", "beforeunload"].forEach(
-      (eventType) => {
-        document.addEventListener(
-          eventType,
-          (e) => {
-            const target = e.target as HTMLElement;
-            if (!target) return;
+    const importantEvents = ["click", "change", "submit", "input"];
 
-            this.eventQueue.push({
-              timestamp: Date.now(),
-              type: eventType,
-              target: {
-                tag: target.tagName.toLowerCase(),
-                id: target.id || "",
-                classes: Array.from(target.classList),
-                position: {
-                  x: target.getBoundingClientRect().x,
-                  y: target.getBoundingClientRect().y,
-                },
+    importantEvents.forEach((eventType) => {
+      document.addEventListener(
+        eventType,
+        (e) => {
+          const target = e.target;
+          if (!target || !(target instanceof HTMLElement)) return;
+
+          this.eventQueue.push({
+            timestamp: Date.now(),
+            type: eventType,
+            target: {
+              tag: target.tagName.toLowerCase(),
+              id: target.id,
+              classes: Array.from(target.classList),
+              position: {
+                x: e instanceof MouseEvent ? e.clientX : 0,
+                y: e instanceof MouseEvent ? e.clientY : 0,
               },
-            });
-          },
-          true
-        );
-      }
-    );
-  }
+            },
+          });
 
-  private overrideConsoleMethods() {
-    type ConsoleMethod = "log" | "warn" | "error" | "info";
+          // Send update immediately for important events
+          this.sendUpdate();
+        },
+        true
+      );
+    });
 
-    (["log", "warn", "error", "info"] as ConsoleMethod[]).forEach((method) => {
-      const original = console[method];
-      console[method] = (...args: any[]) => {
-        this.consoleLogs.push(`[${method.toUpperCase()}] ${args.join(" ")}`);
-        original(...args);
-      };
+    // Always capture page unload
+    window.addEventListener("beforeunload", () => {
+      this.eventQueue.push({
+        timestamp: Date.now(),
+        type: "beforeunload",
+        target: {
+          tag: "window",
+          id: "",
+          classes: [],
+          position: { x: 0, y: 0 },
+        },
+      });
+      this.sendUpdate();
     });
   }
 
-  private collectAssetUrls(): string[] {
-    const assets: string[] = [];
-    document
-      .querySelectorAll("img, video source, iframe, script")
-      .forEach((el) => {
-        const src = (
-          el as
-            | HTMLImageElement
-            | HTMLSourceElement
-            | HTMLIFrameElement
-            | HTMLScriptElement
-        ).src;
-        if (src) assets.push(src);
-      });
-    return assets;
-  }
-
   private startPeriodicCollection() {
-    setInterval(() => this.sendQueuedData(), 5000);
+    setInterval(() => this.sendUpdate(), this.updateInterval);
   }
 }
 
