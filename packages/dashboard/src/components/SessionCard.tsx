@@ -5,6 +5,28 @@ interface SessionCardProps {
   session: Session;
 }
 
+// Format event for display
+const formatEvent = (event: any): string => {
+  switch (event.type) {
+    case "click":
+      return `Clicked ${event.target.tag}${
+        event.target.id ? ` #${event.target.id}` : ""
+      }`;
+    case "change":
+      return `Changed ${event.target.tag}${
+        event.target.id ? ` #${event.target.id}` : ""
+      }`;
+    case "submit":
+      return "Submitted form";
+    case "input":
+      return `Typed in ${event.target.tag}${
+        event.target.id ? ` #${event.target.id}` : ""
+      }`;
+    default:
+      return `${event.type} on ${event.target.tag}`;
+  }
+};
+
 export function SessionCard({ session }: SessionCardProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
@@ -66,6 +88,15 @@ export function SessionCard({ session }: SessionCardProps) {
     return () => window.removeEventListener("resize", scaleContent);
   }, [session.domSnapshot, session.pageUrl]);
 
+  // Get last 5 events in reverse chronological order
+  const recentEvents = [...session.events]
+    .reverse()
+    .slice(0, 5)
+    .map((event) => ({
+      ...event,
+      formattedTime: new Date(event.timestamp).toLocaleTimeString(),
+    }));
+
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
       <h2 className="text-xl font-semibold mb-2">
@@ -89,6 +120,27 @@ export function SessionCard({ session }: SessionCardProps) {
               title="Page Recreation"
             />
           </div>
+        </div>
+
+        <div className="border rounded-lg p-4">
+          <h3 className="font-medium mb-2">Recent Events</h3>
+          {recentEvents.length > 0 ? (
+            <ul className="space-y-1">
+              {recentEvents.map((event, index) => (
+                <li
+                  key={index}
+                  className="text-sm text-gray-600 flex items-center"
+                >
+                  <span className="w-20 text-gray-500">
+                    {event.formattedTime}
+                  </span>
+                  <span>{formatEvent(event)}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-gray-500">No events yet</p>
+          )}
         </div>
 
         <div className="space-y-2">
