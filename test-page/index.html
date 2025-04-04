@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Analytics SDK Test Page</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+      }
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+      }
+      button {
+        margin: 10px;
+        padding: 10px;
+      }
+      input {
+        margin: 10px;
+        padding: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Analytics SDK Test Page</h1>
+
+      <div>
+        <button id="clickMe">Click Me</button>
+        <button id="hoverMe">Hover Over Me</button>
+        <input type="text" id="textInput" placeholder="Type something..." />
+      </div>
+
+      <div
+        id="consoleOutput"
+        style="
+          margin-top: 20px;
+          padding: 10px;
+          border: 1px solid #ccc;
+          min-height: 100px;
+        "
+      >
+        <h3>Console Output:</h3>
+      </div>
+    </div>
+
+    <!-- Include LZString from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
+    <!-- Then include the SDK -->
+    <script
+      src="js/analytics-sdk.min.js"
+      onerror="console.error('Failed to load SDK')"
+    ></script>
+    <script>
+      // Wait for SDK to load
+      window.addEventListener("load", () => {
+        if (typeof window.initAnalyticsClient === "function") {
+          console.log("SDK loaded successfully");
+          window.initAnalyticsClient();
+        } else {
+          console.error("SDK not loaded properly");
+        }
+      });
+
+      // Test console logging
+      console.log("Test log message");
+      console.warn("Test warning message");
+      console.error("Test error message");
+
+      // Add event listeners
+      document.getElementById("clickMe").addEventListener("click", () => {
+        console.log("Button clicked!");
+      });
+
+      document.getElementById("hoverMe").addEventListener("mouseover", () => {
+        console.log("Button hovered!");
+      });
+
+      document.getElementById("textInput").addEventListener("input", (e) => {
+        console.log("Input changed:", e.target.value);
+      });
+    </script>
+  </body>
+</html>

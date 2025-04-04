@@ -1,13 +1,11 @@
 export interface Session {
   id: string;
-  timestamp: number;
-  summary: {
-    userActivity: string;
-    potentialIssues: string[];
-    uxSuggestions: string[];
-    confidence: number;
-  };
-  screenshotPath?: string;
+  startTime: string;
+  events: any[];
+  screenshotPath: string;
+  pageUrl: string;
+  consoleLogs: string[];
+  aiAnalysis: string;
 }
 
 export interface SessionCardProps {
