@@ -37,12 +37,24 @@ class AnalyticsClient {
   private reconnectDelay = 1000;
   private isConnected = false;
 
-  constructor(sessionId: string) {
-    this.sessionId = sessionId;
+  constructor() {
+    // Generate a unique session ID
+    this.sessionId = this.generateSessionId();
     this.initializeWebSocket();
     this.setupEventListeners();
     this.overrideConsoleMethods();
     this.startPeriodicCollection();
+  }
+
+  private generateSessionId(): string {
+    // Generate a random string
+    const randomStr = Math.random().toString(36).substring(2);
+    // Add timestamp
+    const timestamp = Date.now();
+    // Add user agent info
+    const userAgent = navigator.userAgent.substring(0, 10);
+    // Combine all parts
+    return `${timestamp}-${randomStr}-${userAgent}`;
   }
 
   private initializeWebSocket() {
@@ -112,11 +124,11 @@ class AnalyticsClient {
   }
 
   private overrideConsoleMethods() {
-    const methods = ["log", "warn", "error", "info"];
+    const methods = ["log", "warn", "error", "info"] as const;
 
     methods.forEach((method) => {
-      const originalMethod = console[method as keyof Console];
-      console[method as keyof Console] = (...args) => {
+      const originalMethod = console[method];
+      (console as any)[method] = (...args: any[]) => {
         this.consoleLogs.push(`[${method.toUpperCase()}] ${args.join(" ")}`);
         originalMethod.apply(console, args);
       };
@@ -199,13 +211,13 @@ class AnalyticsClient {
 // Create a module to properly scope the global augmentation
 declare global {
   interface Window {
-    initAnalyticsClient: (sessionId: string) => void;
+    initAnalyticsClient: () => void;
   }
 }
 
-// Initialize the client
-const initAnalyticsClient = (sessionId: string) => {
-  new AnalyticsClient(sessionId);
+// Create the initialization function
+const initAnalyticsClient = () => {
+  new AnalyticsClient();
 };
 
 // Export the initialization function

@@ -1,0 +1,25 @@
+{
+  "name": "@analytics/client",
+  "version": "1.0.0",
+  "description": "Client-side analytics SDK",
+  "main": "dist/analytics-sdk.min.js",
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc && rollup -c",
+    "watch": "tsc -w",
+    "dev": "rollup -c -w"
+  },
+  "dependencies": {
+    "lz-string": "^1.5.0"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^24.1.0",
+    "@rollup/plugin-node-resolve": "^15.2.1",
+    "@rollup/plugin-terser": "^0.4.4",
+    "@rollup/plugin-typescript": "^11.1.2",
+    "rollup": "^3.28.1",
+    "tslib": "^2.6.2",
+    "typescript": "^5.2.2"
+  }
+}
